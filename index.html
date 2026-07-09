@@ -886,8 +886,123 @@
     return gen;
   }
 
-  const CARD_W = 160, GAP_X = 30, ROW_H = 130, PAD = 40;
+  const CARD_W = 160, ROW_H = 130, PAD = 40, COUPLE_GAP = 24, CHILD_GAP = 40, ROOT_GAP = 70;
   let treeZoom = 1;
+
+  function buildTreeLayout(gen){
+    // Group people into couple-units: a couple-unit is either a spouse pair
+    // (laid out as one block) or a single person. Every person ends up in
+    // exactly one unit, so units fully partition the tree.
+    const personToUnit = {};
+    const units = [];
+    const claimed = new Set();
+    const orderedPeople = people.slice().sort((a,b)=>a.name.localeCompare(b.name));
+    orderedPeople.forEach(p=>{
+      if(claimed.has(p.id)) return;
+      const spouseId = (p.spouseIds||[]).find(sid => !claimed.has(sid) && personById(sid));
+      const unit = spouseId ? {members:[p.id, spouseId]} : {members:[p.id]};
+      const idx = units.length;
+      units.push(unit);
+      unit.members.forEach(id=>{ personToUnit[id] = idx; claimed.add(id); });
+    });
+
+    function nameOf(u){ const p = personById(u.members[0]); return p ? p.name : ''; }
+    function yearOf(u){
+      const years = u.members.map(id=>{
+        const p = personById(id);
+        const m = p && p.birthDate ? String(p.birthDate).match(/\d{4}/) : null;
+        return m ? parseInt(m[0]) : 9999;
+      });
+      return Math.min(...years);
+    }
+
+    units.forEach(u=>{
+      u.gen = Math.max(...u.members.map(id=>gen[id]||0));
+      u.ownWidth = u.members.length===2 ? (CARD_W*2+COUPLE_GAP) : CARD_W;
+      u.children = [];
+    });
+
+    // Find each unit's primary parent unit (the unit containing whichever
+    // recorded father/mother appears first) so descendants center under it.
+    units.forEach(u=>{
+      let parentUnit = null;
+      for(const pid of u.members){
+        const person = personById(pid);
+        if(!person) continue;
+        if(person.fatherId && personToUnit[person.fatherId]!==undefined){ parentUnit = personToUnit[person.fatherId]; break; }
+        if(person.motherId && personToUnit[person.motherId]!==undefined){ parentUnit = personToUnit[person.motherId]; break; }
+      }
+      u.parentUnit = parentUnit;
+    });
+    units.forEach((u,idx)=>{ if(u.parentUnit!==null) units[u.parentUnit].children.push(idx); });
+
+    const visiting = new Set();
+    function subtreeWidth(idx){
+      const u = units[idx];
+      if(u._subtreeWidth !== undefined) return u._subtreeWidth;
+      if(visiting.has(idx)) return u.ownWidth;
+      visiting.add(idx);
+      const kids = u.children.slice().sort((a,b)=> (yearOf(units[a])-yearOf(units[b])) || nameOf(units[a]).localeCompare(nameOf(units[b])));
+      u.orderedChildren = kids;
+      if(kids.length===0){ u._subtreeWidth = u.ownWidth; }
+      else {
+        const total = kids.reduce((sum,ci)=>sum+subtreeWidth(ci), 0) + CHILD_GAP*(kids.length-1);
+        u._subtreeWidth = Math.max(u.ownWidth, total);
+      }
+      visiting.delete(idx);
+      return u._subtreeWidth;
+    }
+
+    const rootIdxs = [];
+    units.forEach((u,idx)=>{ if(u.parentUnit===null) rootIdxs.push(idx); });
+    rootIdxs.sort((a,b)=> units[a].gen - units[b].gen || nameOf(units[a]).localeCompare(nameOf(units[b])));
+    rootIdxs.forEach(idx=>subtreeWidth(idx));
+
+    const positioned = new Set();
+    function positionUnit(idx, xStart){
+      if(positioned.has(idx)) return;
+      positioned.add(idx);
+      const u = units[idx];
+      const width = u._subtreeWidth;
+      const center = xStart + width/2;
+      u.x = center - u.ownWidth/2;
+      u.y = PAD + u.gen*ROW_H;
+      if(u.members.length===2){
+        const ordered = u.members.slice().sort((a,b)=>personById(a).name.localeCompare(personById(b).name));
+        personById(ordered[0])._treeRenderX = u.x;
+        personById(ordered[0])._treeRenderY = u.y;
+        personById(ordered[1])._treeRenderX = u.x + CARD_W + COUPLE_GAP;
+        personById(ordered[1])._treeRenderY = u.y;
+      } else {
+        personById(u.members[0])._treeRenderX = u.x;
+        personById(u.members[0])._treeRenderY = u.y;
+      }
+      const kids = u.orderedChildren || [];
+      if(kids.length){
+        const kidsWidth = kids.reduce((s,ci)=>s+units[ci]._subtreeWidth,0) + CHILD_GAP*(kids.length-1);
+        let cx = xStart + (width - kidsWidth)/2;
+        kids.forEach(ci=>{
+          positionUnit(ci, cx);
+          cx += units[ci]._subtreeWidth + CHILD_GAP;
+        });
+      }
+    }
+    let cursorX = PAD;
+    rootIdxs.forEach(idx=>{
+      positionUnit(idx, cursorX);
+      cursorX += units[idx]._subtreeWidth + ROOT_GAP;
+    });
+
+    // Safety net: anyone the algorithm somehow didn't reach (shouldn't
+    // normally happen) still gets a visible spot instead of vanishing.
+    let strayX = PAD, strayY = PAD + ((Math.max(...Object.values(gen))||0)+1)*ROW_H + ROW_H;
+    people.forEach(p=>{
+      if(typeof p._treeRenderX !== 'number'){
+        p._treeRenderX = strayX; p._treeRenderY = strayY;
+        strayX += CARD_W + CHILD_GAP;
+      }
+    });
+  }
 
   function renderTree(){
     const canvas = document.getElementById('tree-canvas');
@@ -896,52 +1011,10 @@
       return;
     }
     const gen = computeGenerations();
-    const maxGen = Math.max(...Object.values(gen));
-    const rows = [];
-    for(let g=0; g<=maxGen; g++){ rows.push(people.filter(p=>gen[p.id]===g)); }
-
-    let prevIdx = {};
-    rows.forEach((row, gi) => {
-      const capturedPrev = prevIdx;
-      if(gi>0){
-        row.sort((a,b)=>{
-          const av = avgParentPos(a, capturedPrev, gi); const bv = avgParentPos(b, capturedPrev, gi);
-          return (av-bv) || a.name.localeCompare(b.name);
-        });
-      } else {
-        row.sort((a,b)=>a.name.localeCompare(b.name));
-      }
-      const ordered = [];
-      const placed = new Set();
-      row.forEach(p=>{
-        if(placed.has(p.id)) return;
-        ordered.push(p); placed.add(p.id);
-        (p.spouseIds||[]).forEach(sid=>{
-          if(placed.has(sid)) return;
-          const sp = row.find(x=>x.id===sid);
-          if(sp){ ordered.push(sp); placed.add(sp.id); }
-        });
-      });
-      row = ordered;
-      rows[gi] = row;
-      const idx = {};
-      row.forEach((p,i)=>idx[p.id]=i);
-      prevIdx = idx;
-      function avgParentPos(p, prevMap, genIndex){
-        const parents = [p.fatherId, p.motherId].filter(pid=>pid && gen[pid]===genIndex-1);
-        if(!parents.length) return 999;
-        const positions = parents.map(pid => prevMap[pid] !== undefined ? prevMap[pid] : 999);
-        return positions.reduce((a,b)=>a+b,0)/positions.length;
-      }
-    });
-
-    rows.forEach((row, gi)=>{
-      row.forEach((p, i)=>{
-        const defaultX = PAD + i*(CARD_W+GAP_X);
-        const defaultY = PAD + gi*ROW_H;
-        p._treeRenderX = (typeof p.treeX === 'number') ? p.treeX : defaultX;
-        p._treeRenderY = (typeof p.treeY === 'number') ? p.treeY : defaultY;
-      });
+    buildTreeLayout(gen);
+    people.forEach(p=>{
+      if(typeof p.treeX === 'number') p._treeRenderX = p.treeX;
+      if(typeof p.treeY === 'number') p._treeRenderY = p.treeY;
     });
 
     canvas.innerHTML = '<svg id="tree-svg"></svg>' + people.map(p => `
