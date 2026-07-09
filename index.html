@@ -877,13 +877,19 @@
       } else {
         row.sort((a,b)=>a.name.localeCompare(b.name));
       }
-      for(let i=0;i<row.length;i++){
-        const person = row[i];
-        (person.spouseIds||[]).forEach(sid=>{
-          const sIdx = row.findIndex(p=>p.id===sid);
-          if(sIdx > i+1){ const [sp] = row.splice(sIdx,1); row.splice(i+1,0,sp); }
+      const ordered = [];
+      const placed = new Set();
+      row.forEach(p=>{
+        if(placed.has(p.id)) return;
+        ordered.push(p); placed.add(p.id);
+        (p.spouseIds||[]).forEach(sid=>{
+          if(placed.has(sid)) return;
+          const sp = row.find(x=>x.id===sid);
+          if(sp){ ordered.push(sp); placed.add(sp.id); }
         });
-      }
+      });
+      row = ordered;
+      rows[gi] = row;
       const idx = {};
       row.forEach((p,i)=>idx[p.id]=i);
       prevIdx = idx;
