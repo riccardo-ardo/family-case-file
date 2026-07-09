@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Family Case File</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg:#f5f5f7;
+    --glass:rgba(255,255,255,0.68);
+    --glass-strong:rgba(255,255,255,0.9);
+    --border:rgba(0,0,0,0.08);
+    --border-strong:rgba(0,0,0,0.14);
+    --text:#1d1d1f;
+    --text-secondary:#6e6e73;
+    --text-tertiary:#a1a1a6;
+    --blue:#0071e3;
+    --blue-bg:rgba(0,113,227,0.1);
+    --green:#248a3d;
+    --orange:#c5690a;
+    --orange-bg:rgba(255,149,0,0.12);
+    --purple:#8e3bd1;
+    --purple-bg:rgba(175,82,222,0.12);
+    --gray:#86868b;
+    --gray-bg:rgba(134,134,139,0.12);
+    --red:#d70015;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --shadow:0 8px 30px rgba(0,0,0,0.08);
+    --shadow-lg:0 20px 60px rgba(0,0,0,0.14);
+  }
+  [data-theme="dark"]{
+    --bg:#000000;
+    --glass:rgba(30,30,32,0.7);
+    --glass-strong:rgba(40,40,42,0.92);
+    --border:rgba(255,255,255,0.1);
+    --border-strong:rgba(255,255,255,0.16);
+    --text:#f5f5f7;
+    --text-secondary:#98989d;
+    --text-tertiary:#6e6e73;
+    --blue:#409cff;
+    --blue-bg:rgba(64,156,255,0.16);
+    --green:#32d74b;
+    --orange:#ff9f0a;
+    --orange-bg:rgba(255,159,10,0.16);
+    --purple:#bf5af2;
+    --purple-bg:rgba(191,90,242,0.16);
+    --gray:#98989d;
+    --gray-bg:rgba(152,152,157,0.16);
+    --red:#ff453a;
+    --shadow:0 8px 30px rgba(0,0,0,0.4);
+    --shadow-lg:0 20px 60px rgba(0,0,0,0.55);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  section{scroll-margin-top:96px;}
+  h1,h2,h3{font-weight:600; letter-spacing:-0.01em; margin:0;}
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border-strong); border-radius:8px;}
+
+  .setup-banner{
+    background:linear-gradient(120deg,#ff9f0a,#ff6b6b); color:#fff; padding:14px 24px; font-size:13.5px;
+    display:none; line-height:1.6;
+  }
+  .setup-banner.show{display:block;}
+  .setup-banner code{background:rgba(0,0,0,0.18); padding:1px 6px; border-radius:4px; font-size:12.5px;}
+  .setup-banner a{color:#fff; text-decoration:underline;}
+
+  .topbar{
+    position:sticky; top:0; z-index:60;
+    background:var(--glass); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid var(--border);
+    padding:12px 24px;
+  }
+  .topbar-inner{max-width:1200px; margin:0 auto; display:flex; align-items:center; gap:18px; flex-wrap:wrap; justify-content:space-between;}
+  .brand{display:flex; align-items:baseline; gap:9px;}
+  .brand h1{font-size:19px;}
+  .brand .tag{font-size:12px; color:var(--text-secondary);}
+  .navpills{display:flex; gap:4px; background:var(--gray-bg); padding:4px; border-radius:12px;}
+  .navpill{
+    font-size:13px; font-weight:500; color:var(--text-secondary); text-decoration:none;
+    padding:7px 14px; border-radius:9px; transition:background .2s, color .2s;
+  }
+  .navpill:hover{color:var(--text);}
+  .navpill.active{background:var(--glass-strong); color:var(--text); box-shadow:var(--shadow);}
+  .topbar-actions{display:flex; gap:8px; align-items:center; position:relative;}
+  .sync-status{font-size:11.5px; color:var(--text-tertiary); display:flex; align-items:center; gap:5px; margin-right:4px;}
+  .sync-dot{width:6px; height:6px; border-radius:50%; background:var(--green); flex:none;}
+
+  .btn{
+    font-family:inherit; font-size:13.5px; font-weight:500; border-radius:980px; cursor:pointer;
+    padding:8px 16px; border:none; transition:transform .15s ease, background .15s ease, opacity .15s;
+  }
+  .btn:active{transform:scale(0.96);}
+  .btn-primary{background:var(--blue); color:#fff;}
+  .btn-primary:hover{opacity:0.88;}
+  .btn-secondary{background:var(--gray-bg); color:var(--text);}
+  .btn-secondary:hover{background:var(--border-strong);}
+  .btn-ghost{background:transparent; color:var(--text-secondary); border:1px solid var(--border-strong);}
+  .btn-ghost:hover{color:var(--text); background:var(--gray-bg);}
+  .btn-danger{background:transparent; color:var(--red); border:1px solid var(--red);}
+  .btn-danger:hover{background:rgba(215,0,21,0.08);}
+  .btn-icon{
+    height:34px; padding:0 14px; border-radius:980px; background:var(--gray-bg); border:none; cursor:pointer;
+    display:flex; align-items:center; gap:6px; font-size:14px; color:var(--text-secondary);
+    transition:background .15s; white-space:nowrap;
+  }
+  .btn-icon:hover{background:var(--border-strong); color:var(--text);}
+  .btn-icon .lbl{font-size:12.5px; font-weight:500;}
+  .btn-small{padding:5px 12px; font-size:12px;}
+
+  .dropdown-menu{
+    position:absolute; top:44px; right:0; background:var(--glass-strong); backdrop-filter:blur(20px);
+    border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow-lg); min-width:210px;
+    padding:6px; display:none; z-index:70;
+  }
+  .dropdown-menu.open{display:block;}
+  .dropdown-menu button{
+    display:block; width:100%; text-align:left; background:none; border:none; padding:9px 12px;
+    font-size:13.5px; color:var(--text); border-radius:8px; cursor:pointer; font-family:inherit;
+  }
+  .dropdown-menu button:hover{background:var(--gray-bg);}
+
+  main{max-width:1200px; margin:0 auto; padding:36px 24px 100px 24px;}
+
+  .hero{margin-bottom:40px;}
+  .hero h2{font-size:32px; margin-bottom:6px;}
+  .hero p{color:var(--text-secondary); font-size:15px; max-width:560px; margin:0;}
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:22px;}
+  @media (max-width:700px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{
+    background:var(--glass); backdrop-filter:blur(20px); border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:16px 18px;
+  }
+  .stat-card .num{font-size:26px; font-weight:600; letter-spacing:-0.02em;}
+  .stat-card .lbl{font-size:12.5px; color:var(--text-secondary); margin-top:2px;}
+
+  .glass{
+    background:var(--glass); backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%);
+    border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow);
+  }
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; margin:56px 0 16px 0; flex-wrap:wrap; gap:10px;}
+  .section-head h2{font-size:24px;}
+  .section-head p{font-size:13.5px; color:var(--text-secondary); margin-top:3px;}
+  .toolbar{display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap;}
+  .toolbar input[type="text"]{
+    flex:1; min-width:200px; padding:9px 14px; border:1px solid var(--border-strong); border-radius:10px;
+    background:var(--glass-strong); font-family:inherit; font-size:14px; color:var(--text);
+  }
+  .toolbar input[type="text"]:focus{outline:2px solid var(--blue); outline-offset:1px;}
+
+  .layout-split{display:grid; grid-template-columns:290px 1fr; gap:16px; align-items:start;}
+  @media (max-width:820px){.layout-split{grid-template-columns:1fr;}}
+  .person-list{display:flex; flex-direction:column; gap:6px; max-height:65vh; overflow-y:auto; padding:6px;}
+  .person-row{
+    display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:12px; cursor:pointer;
+    transition:background .15s;
+  }
+  .person-row:hover{background:var(--gray-bg);}
+  .person-row.selected{background:var(--blue-bg);}
+  .avatar{
+    width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#409cff,#af52de);
+    color:#fff; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .person-row .name{font-size:14.5px; font-weight:500;}
+  .person-row .meta{font-size:11.5px; color:var(--text-secondary);}
+
+  .empty-state{text-align:center; padding:60px 24px; color:var(--text-secondary);}
+  .empty-state h3{color:var(--text); font-size:17px; margin-bottom:6px;}
+  .empty-state .btn{margin-top:16px;}
+
+  .detail-pad{padding:26px 28px;}
+  .detail-header{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px;}
+  .detail-header .who{display:flex; align-items:center; gap:14px;}
+  .detail-header .avatar{width:52px; height:52px; font-size:19px;}
+  .detail-header h2{font-size:22px;}
+  .detail-header .alt{color:var(--text-secondary); font-size:13px; margin-top:2px;}
+  .field-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px 22px; margin:18px 0;}
+  .field label{display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-tertiary); margin-bottom:3px; font-weight:600;}
+  .field .val{font-size:14.5px;}
+  .field .val.empty{color:var(--text-tertiary); font-style:italic;}
+  .notes-block{margin-top:6px; white-space:pre-wrap; line-height:1.6; font-size:14.5px;}
+  .divider{border:none; border-top:1px solid var(--border); margin:18px 0;}
+  .rel-row{display:flex; align-items:center; gap:9px; margin-bottom:7px; font-size:14px;}
+  .rel-tag{
+    font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; color:var(--blue); background:var(--blue-bg);
+    padding:3px 9px; border-radius:980px; min-width:52px; text-align:center;
+  }
+  a.linkperson{color:var(--text); font-weight:500; text-decoration:none; border-bottom:1px solid var(--border-strong); cursor:pointer;}
+  a.linkperson:hover{border-color:var(--blue); color:var(--blue);}
+  .small-label{font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-tertiary); font-weight:600;}
+
+  #tree-scroll{overflow:auto; min-height:320px; padding:20px 6px;}
+  #tree-canvas{position:relative; padding:24px 30px;}
+  .gen-row{display:flex; gap:20px; margin-bottom:64px; align-items:flex-start;}
+  .tree-card{
+    background:var(--glass-strong); border:1px solid var(--border); border-radius:14px; padding:10px 14px;
+    min-width:132px; max-width:170px; text-align:center; cursor:pointer; position:relative; box-shadow:var(--shadow);
+    transition:transform .15s ease;
+  }
+  .tree-card:hover{transform:translateY(-2px); border-color:var(--blue);}
+  .tree-card .name{font-weight:600; font-size:13px; line-height:1.3;}
+  .tree-card .years{font-size:10.5px; color:var(--text-secondary); margin-top:2px;}
+  .tree-card .place{font-size:10.5px; color:var(--blue); margin-top:2px;}
+  #tree-svg{position:absolute; top:0; left:0; pointer-events:none;}
+
+  .mig-card{
+    border-radius:14px; padding:14px 16px; background:var(--glass-strong); border:1px solid var(--border); margin-bottom:10px;
+    border-left:4px solid var(--gray);
+  }
+  .mig-card.conf-documented{border-left-color:var(--blue);}
+  .mig-card.conf-story{border-left-color:var(--orange);}
+  .mig-card.conf-hypothesis{border-left-color:var(--purple);}
+  .mig-card.conf-unknown{border-left-color:var(--gray);}
+  .mig-top{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px;}
+  .mig-route{font-weight:600; font-size:15px;}
+  .mig-badge{font-size:10.5px; font-weight:600; padding:3px 10px; border-radius:980px; background:var(--gray-bg); color:var(--text-secondary);}
+  .mig-badge.conf-documented{background:var(--blue-bg); color:var(--blue);}
+  .mig-badge.conf-story{background:var(--orange-bg); color:var(--orange);}
+  .mig-badge.conf-hypothesis{background:var(--purple-bg); color:var(--purple);}
+  .mig-meta{font-size:12.5px; color:var(--text-secondary); margin-top:3px;}
+  .mig-notes{margin-top:7px; font-size:13.5px; line-height:1.55;}
+
+  .board-wrap{display:flex; flex-direction:column; align-items:center; padding:20px;}
+  #board-svg{width:100%; max-width:900px; height:auto;}
+  .board-list{margin-top:20px; width:100%;}
+  .board-list h3{font-size:15px; margin-bottom:8px; margin-top:20px;}
+
+  .legend{display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--text-secondary); margin-bottom:16px;}
+  .legend span{display:inline-flex; align-items:center; gap:6px;}
+  .legend .swatch{width:16px; height:3px; display:inline-block; border-radius:2px;}
+  .scrollnote{font-size:12.5px; color:var(--text-tertiary); padding:16px;}
+
+  .modal-backdrop{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); backdrop-filter:blur(6px); z-index:100;
+    align-items:flex-start; justify-content:center; padding:50px 16px; overflow-y:auto;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:var(--glass-strong); backdrop-filter:blur(30px); border-radius:20px; max-width:560px; width:100%;
+    padding:26px 28px 28px 28px; border:1px solid var(--border); box-shadow:var(--shadow-lg);
+    animation:modalIn .22s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes modalIn{from{opacity:0; transform:translateY(10px) scale(0.98);} to{opacity:1; transform:none;}}
+  .modal h3{font-size:19px; margin-bottom:16px;}
+  .form-row{margin-bottom:13px;}
+  .form-row label{display:block; font-size:11.5px; font-weight:600; margin-bottom:5px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px;}
+  .form-row input[type="text"], .form-row select, .form-row textarea{
+    width:100%; padding:9px 12px; border:1px solid var(--border-strong); border-radius:10px; background:var(--bg);
+    font-family:inherit; font-size:14px; color:var(--text);
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus{outline:2px solid var(--blue); outline-offset:1px;}
+  .form-row textarea{min-height:70px; resize:vertical; font-family:inherit;}
+  .form-two{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:20px;}
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(12px); opacity:0;
+    background:var(--glass-strong); backdrop-filter:blur(20px); border:1px solid var(--border); box-shadow:var(--shadow-lg);
+    padding:11px 20px; border-radius:980px; font-size:13.5px; z-index:200; transition:opacity .25s, transform .25s; pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;} }
+</style>
+</head>
+<body>
+
+<div class="setup-banner" id="setup-banner">
+  <strong>Setup needed before this syncs between people:</strong>
+  this file needs a free JSONBin.io storage bin. Open the file in a text editor, find <code>JSONBIN_ID</code> and <code>JSONBIN_KEY</code> near the top of the script, and paste in your own bin ID and master key.
+  Until then, everything you enter stays in this browser tab only. Ask Claude for the full setup steps if you need them again.
+</div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <h1>Family Case File</h1>
+      <span class="tag">Tracing the Greek diaspora</span>
+    </div>
+    <div class="navpills" id="navpills">
+      <a class="navpill" href="#sec-people" data-sec="sec-people">People</a>
+      <a class="navpill" href="#sec-tree" data-sec="sec-tree">Tree</a>
+      <a class="navpill" href="#sec-migrations" data-sec="sec-migrations">Migrations</a>
+      <a class="navpill" href="#sec-board" data-sec="sec-board">Routes</a>
+    </div>
+    <div class="topbar-actions">
+      <div class="sync-status"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">loading…</span></div>
+      <button class="btn-icon" id="btn-save" title="Save the whole document now">⬇<span class="lbl">Save</span></button>
+      <button class="btn-icon" id="btn-refresh" title="Check for updates">↻<span class="lbl">Sync</span></button>
+      <button class="btn-icon" id="btn-theme" title="Toggle dark mode">◐<span class="lbl">Theme</span></button>
+      <div style="position:relative;">
+        <button class="btn-icon" id="btn-export-menu" title="Export">⤓<span class="lbl">Export</span></button>
+        <div class="dropdown-menu" id="export-menu">
+          <button id="exp-backup">Full backup (.json)</button>
+          <button id="exp-list">People list (.csv)</button>
+          <button id="exp-branches">Family branches (.txt)</button>
+        </div>
+      </div>
+      <button class="btn-icon" id="btn-import" title="Restore a backup">↑<span class="lbl">Import</span></button>
+      <input type="file" id="file-import" accept=".json" style="display:none;">
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <div class="hero">
+    <h2>Everything you know, in one place</h2>
+    <p>Add a person, link them to family, log a migration — the tree, the timeline and the routes below update instantly as the picture fills in.</p>
+    <div class="stat-row">
+      <div class="stat-card"><div class="num" id="stat-people">0</div><div class="lbl">people recorded</div></div>
+      <div class="stat-card"><div class="num" id="stat-migrations">0</div><div class="lbl">migrations logged</div></div>
+      <div class="stat-card"><div class="num" id="stat-generations">0</div><div class="lbl">generations spanned</div></div>
+      <div class="stat-card"><div class="num" id="stat-unknown">0</div><div class="lbl">still unexplained</div></div>
+    </div>
+  </div>
+
+  <section id="sec-people">
+    <div class="section-head">
+      <div><h2>People</h2><p>Everyone in the file so far</p></div>
+      <button class="btn btn-primary" id="btn-add-person">+ Add person</button>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="people-search" placeholder="Search by name or place">
+    </div>
+    <div class="layout-split">
+      <div class="glass"><div id="person-list" class="person-list"></div></div>
+      <div id="person-detail"></div>
+    </div>
+  </section>
+
+  <section id="sec-tree">
+    <div class="section-head">
+      <div><h2>Family tree</h2><p>Built automatically from the parent and spouse links you enter above</p></div>
+    </div>
+    <div class="glass">
+      <div id="tree-scroll">
+        <div id="tree-canvas"><svg id="tree-svg"></svg><div id="tree-rows"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sec-migrations">
+    <div class="section-head">
+      <div><h2>Migrations</h2><p>Every recorded move, and how sure you are of the reason</p></div>
+      <button class="btn btn-primary" id="btn-add-mig">+ Add migration</button>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="mig-search" placeholder="Search by name or place">
+    </div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--blue);"></i>documented</span>
+      <span><i class="swatch" style="background:var(--orange);"></i>family story</span>
+      <span><i class="swatch" style="background:var(--purple);"></i>hypothesis</span>
+      <span><i class="swatch" style="background:var(--gray);"></i>unknown reason</span>
+    </div>
+    <div id="mig-list"></div>
+  </section>
+
+  <section id="sec-board">
+    <div class="section-head">
+      <div><h2>Routes</h2><p>Every migration, gathered by destination — line style shows how solid the evidence is</p></div>
+    </div>
+    <div class="glass board-wrap">
+      <svg id="board-svg" viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="legend" style="margin-top:16px;">
+      <span><i class="swatch" style="background:var(--blue);"></i>documented</span>
+      <span><i class="swatch" style="background:var(--orange);"></i>family story</span>
+      <span><i class="swatch" style="background:var(--purple);"></i>hypothesis</span>
+      <span><i class="swatch" style="background:var(--gray);"></i>unknown</span>
+    </div>
+    <div class="board-list" id="board-list"></div>
+  </section>
+
+</main>
+
+<div class="modal-backdrop" id="modal-person">
+  <div class="modal">
+    <h3 id="person-modal-title">Add person</h3>
+    <input type="hidden" id="person-id">
+    <div class="form-row">
+      <label>Full name *</label>
+      <input type="text" id="p-name" placeholder="e.g. Eleni Papadopoulou">
+    </div>
+    <div class="form-two">
+      <div class="form-row">
+        <label>Also known as</label>
+        <input type="text" id="p-altnames" placeholder="anglicized / maiden name">
+      </div>
+      <div class="form-row">
+        <label>Sex</label>
+        <select id="p-sex"><option value="">unknown</option><option value="F">female</option><option value="M">male</option></select>
+      </div>
+    </div>
+    <div class="form-two">
+      <div class="form-row">
+        <label>Born (date or approx.)</label>
+        <input type="text" id="p-birthdate" placeholder="e.g. 1912 or c.1910s">
+      </div>
+      <div class="form-row">
+        <label>Birthplace</label>
+        <input type="text" id="p-birthplace" placeholder="e.g. Kalamata, Greece">
+      </div>
+    </div>
+    <div class="form-two">
+      <div class="form-row">
+        <label>Died (date or approx.)</label>
+        <input type="text" id="p-deathdate" placeholder="leave blank if living/unknown">
+      </div>
+      <div class="form-row">
+        <label>Place of death</label>
+        <input type="text" id="p-deathplace" placeholder="">
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Father</label>
+      <select id="p-father"></select>
+    </div>
+    <div class="form-row">
+      <label>Mother</label>
+      <select id="p-mother"></select>
+    </div>
+    <div class="form-row">
+      <label>Spouse(s) — hold Ctrl/Cmd to select more than one</label>
+      <select id="p-spouses" multiple size="3"></select>
+    </div>
+    <div class="form-row">
+      <label>Sibling(s) — hold Ctrl/Cmd to select more than one</label>
+      <select id="p-siblings" multiple size="3"></select>
+    </div>
+    <div class="form-row">
+      <label>Notes, sources, memories</label>
+      <textarea id="p-notes" placeholder="Anything you know: occupation, documents seen, family stories, questions still open..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="btn-delete-person" style="display:none;">Delete</button>
+      <button class="btn btn-secondary" id="btn-cancel-person">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-person">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-mig">
+  <div class="modal">
+    <h3 id="mig-modal-title">Add migration</h3>
+    <input type="hidden" id="m-id">
+    <div class="form-row">
+      <label>Person *</label>
+      <select id="m-person"></select>
+    </div>
+    <div class="form-two">
+      <div class="form-row">
+        <label>From</label>
+        <input type="text" id="m-from" placeholder="e.g. Kalamata, Greece" list="place-suggestions">
+      </div>
+      <div class="form-row">
+        <label>To</label>
+        <input type="text" id="m-to" placeholder="e.g. Alexandria, Egypt" list="place-suggestions">
+      </div>
+    </div>
+    <datalist id="place-suggestions">
+      <option value="Greece"><option value="Egypt"><option value="South Africa"><option value="Australia"><option value="United Kingdom">
+    </datalist>
+    <div class="form-row">
+      <label>Year / date (approx. ok)</label>
+      <input type="text" id="m-year" placeholder="e.g. 1937 or early 1950s">
+    </div>
+    <div class="form-row">
+      <label>How confident is this reason?</label>
+      <select id="m-confidence">
+        <option value="documented">Documented (papers, records)</option>
+        <option value="story">Family story / oral history</option>
+        <option value="hypothesis">Hypothesis / working theory</option>
+        <option value="unknown">Unknown — no reason yet</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Reason / evidence / notes</label>
+      <textarea id="m-notes" placeholder="What do you know or suspect? e.g. 'family said it was for cotton trade work' or 'ship manifest found, reason not stated'"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="btn-delete-mig" style="display:none;">Delete</button>
+      <button class="btn btn-secondary" id="btn-cancel-mig">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-mig">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  // ============ STORAGE CONFIG ============
+  // Create a free account at https://jsonbin.io, create one bin, then paste
+  // its Bin ID and Master Key below. Everyone who opens this same file will
+  // then read and write the same shared data.
+  const CONFIG = {
+    JSONBIN_ID: '6a4ff7adf5f4af5e29792ad6',
+    JSONBIN_KEY: '$2a$10$TckKi6ppJW2MOaBYNYg5xe.MpVd/D0bby8ovrw2uO1X5xhJ5ba94S',
+  };
+  // ==========================================
+
+  function isConfigured(){
+    return CONFIG.JSONBIN_ID && !CONFIG.JSONBIN_ID.startsWith('PASTE') &&
+           CONFIG.JSONBIN_KEY && !CONFIG.JSONBIN_KEY.startsWith('PASTE');
+  }
+
+  let people = [];
+  let migrations = [];
+  let selectedPersonId = null;
+  let anyModalOpen = false;
+  let lastSyncedAt = null;
+  let lastRemoteSnapshot = '';
+
+  function uid(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function initials(name){
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]||'')[0]||'') + ((parts[1]||'')[0]||'');
+  }
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._h);
+    showToast._h = setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+  function setSyncStatus(text, ok){
+    document.getElementById('sync-text').textContent = text;
+    document.getElementById('sync-dot').style.background = ok ? 'var(--green)' : 'var(--red)';
+  }
+
+  if(!isConfigured()){
+    document.getElementById('setup-banner').classList.add('show');
+    setSyncStatus('not connected', false);
+  }
+
+  async function loadData(silent){
+    if(!isConfigured()){ renderAll(); return; }
+    try{
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${CONFIG.JSONBIN_ID}/latest`, {
+        headers: { 'X-Master-Key': CONFIG.JSONBIN_KEY, 'X-Bin-Meta': 'false' }
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const raw = await res.text();
+      if(raw === lastRemoteSnapshot && silent){ setSyncStatus('up to date', true); return; }
+      const parsed = raw ? JSON.parse(raw) : {};
+      people = parsed.people || [];
+      migrations = parsed.migrations || [];
+      lastRemoteSnapshot = raw;
+      lastSyncedAt = new Date();
+      setSyncStatus('synced just now', true);
+      renderAll();
+    }catch(e){
+      setSyncStatus('could not connect', false);
+      if(!silent) renderAll();
+    }
+  }
+
+  async function saveData(manual){
+    if(!isConfigured()){
+      if(manual) showToast('Add your JSONBin ID and key first — see the banner at the top.');
+      return;
+    }
+    const payload = JSON.stringify({people, migrations});
+    try{
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${CONFIG.JSONBIN_ID}`, {
+        method:'PUT',
+        headers:{ 'Content-Type':'application/json', 'X-Master-Key': CONFIG.JSONBIN_KEY },
+        body: payload
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      lastRemoteSnapshot = payload;
+      lastSyncedAt = new Date();
+      setSyncStatus('synced just now', true);
+      if(manual) showToast('Saved the whole document.');
+    }catch(e){
+      setSyncStatus('could not save', false);
+      if(manual) showToast('Could not save — check your connection and try again.');
+    }
+  }
+
+  setInterval(()=>{ if(!anyModalOpen) loadData(true); }, 6000);
+  setInterval(()=>{
+    if(!lastSyncedAt) return;
+    const secs = Math.round((Date.now()-lastSyncedAt.getTime())/1000);
+    const el = document.getElementById('sync-text');
+    if(el && el.textContent.endsWith('ago') || (el && el.textContent==='synced just now' && secs>8)){
+      el.textContent = `synced ${secs}s ago`;
+    }
+  }, 4000);
+
+  document.getElementById('btn-save').addEventListener('click', ()=>saveData(true));
+  document.getElementById('btn-refresh').addEventListener('click', ()=>loadData(false));
+
+  function personById(id){ return people.find(p => p.id === id); }
+  function personName(id){ const p = personById(id); return p ? p.name : '(unknown)'; }
+
+  function renderAll(){
+    renderStats();
+    renderPersonList();
+    renderPersonDetail();
+    renderTree();
+    renderMigrations();
+    renderBoard();
+  }
+
+  function renderStats(){
+    document.getElementById('stat-people').textContent = people.length;
+    document.getElementById('stat-migrations').textContent = migrations.length;
+    const gen = people.length ? computeGenerations() : {};
+    const maxGen = people.length ? Math.max(0, ...Object.values(gen)) + 1 : 0;
+    document.getElementById('stat-generations').textContent = maxGen;
+    document.getElementById('stat-unknown').textContent = migrations.filter(m=>m.confidence==='unknown'||!m.confidence).length;
+  }
+
+  const sections = ['sec-people','sec-tree','sec-migrations','sec-board'];
+  const pills = document.querySelectorAll('.navpill');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ pills.forEach(p=>p.classList.toggle('active', p.dataset.sec===e.target.id)); } });
+  }, {rootMargin:'-40% 0px -55% 0px'});
+  sections.forEach(id=>{ const el = document.getElementById(id); if(el) io.observe(el); });
+
+  function renderPersonList(){
+    const q = (document.getElementById('people-search').value || '').toLowerCase();
+    const list = document.getElementById('person-list');
+    const filtered = people.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.birthPlace||'').toLowerCase().includes(q) ||
+      (p.altNames||'').toLowerCase().includes(q)
+    ).sort((a,b)=>a.name.localeCompare(b.name));
+
+    if(people.length === 0){ list.innerHTML = ''; return; }
+    if(filtered.length === 0){ list.innerHTML = '<div class="scrollnote">No one matches that search.</div>'; return; }
+
+    list.innerHTML = filtered.map(p => `
+      <div class="person-row ${p.id===selectedPersonId?'selected':''}" data-id="${p.id}">
+        <div class="avatar">${escapeHtml(initials(p.name))}</div>
+        <div>
+          <div class="name">${escapeHtml(p.name)}</div>
+          <div class="meta">${escapeHtml(p.birthPlace || 'birthplace unknown')}${p.birthDate ? ' · b. '+escapeHtml(p.birthDate):''}</div>
+        </div>
+      </div>
+    `).join('');
+    list.querySelectorAll('.person-row').forEach(row=>{
+      row.addEventListener('click', ()=>{ selectedPersonId = row.dataset.id; renderPersonList(); renderPersonDetail(); });
+    });
+  }
+  document.getElementById('people-search').addEventListener('input', renderPersonList);
+
+  function renderPersonDetail(){
+    const el = document.getElementById('person-detail');
+    if(people.length === 0){
+      el.innerHTML = `
+        <div class="empty-state glass">
+          <h3>No one in the file yet</h3>
+          <p>Start with whoever you know the most about — often the one who moved.</p>
+          <button class="btn btn-primary" id="empty-add-person">+ Add the first person</button>
+        </div>`;
+      document.getElementById('empty-add-person').addEventListener('click', openAddPerson);
+      return;
+    }
+    const p = personById(selectedPersonId);
+    if(!p){
+      el.innerHTML = `<div class="empty-state glass"><h3>Select someone</h3><p>Choose a name on the left to see what you've recorded.</p></div>`;
+      return;
+    }
+    const father = p.fatherId ? personById(p.fatherId) : null;
+    const mother = p.motherId ? personById(p.motherId) : null;
+    const spouses = (p.spouseIds||[]).map(id=>personById(id)).filter(Boolean);
+    const siblings = (p.siblingIds||[]).map(id=>personById(id)).filter(Boolean);
+    const children = people.filter(c => c.fatherId === p.id || c.motherId === p.id);
+    const personMigs = migrations.filter(m => m.personId === p.id);
+
+    el.innerHTML = `
+      <div class="glass detail-pad">
+        <div class="detail-header">
+          <div class="who">
+            <div class="avatar">${escapeHtml(initials(p.name))}</div>
+            <div>
+              <h2>${escapeHtml(p.name)}</h2>
+              ${p.altNames ? `<div class="alt">also known as ${escapeHtml(p.altNames)}</div>` : ''}
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-small" id="btn-edit-this">Edit</button>
+        </div>
+        <div class="field-grid">
+          <div class="field"><label>Born</label><div class="val ${!p.birthDate?'empty':''}">${p.birthDate ? escapeHtml(p.birthDate) : 'unknown'}</div></div>
+          <div class="field"><label>Birthplace</label><div class="val ${!p.birthPlace?'empty':''}">${p.birthPlace ? escapeHtml(p.birthPlace) : 'unknown'}</div></div>
+          <div class="field"><label>Died</label><div class="val ${!p.deathDate?'empty':''}">${p.deathDate ? escapeHtml(p.deathDate) : 'unknown / living'}</div></div>
+          <div class="field"><label>Place of death</label><div class="val ${!p.deathPlace?'empty':''}">${p.deathPlace ? escapeHtml(p.deathPlace) : 'unknown'}</div></div>
+        </div>
+        <hr class="divider">
+        <div>
+          ${father ? `<div class="rel-row"><span class="rel-tag">father</span><a class="linkperson" data-id="${father.id}">${escapeHtml(father.name)}</a></div>` : ''}
+          ${mother ? `<div class="rel-row"><span class="rel-tag">mother</span><a class="linkperson" data-id="${mother.id}">${escapeHtml(mother.name)}</a></div>` : ''}
+          ${spouses.map(s=>`<div class="rel-row"><span class="rel-tag">spouse</span><a class="linkperson" data-id="${s.id}">${escapeHtml(s.name)}</a></div>`).join('')}
+          ${siblings.map(s=>`<div class="rel-row"><span class="rel-tag">sibling</span><a class="linkperson" data-id="${s.id}">${escapeHtml(s.name)}</a></div>`).join('')}
+          ${children.map(c=>`<div class="rel-row"><span class="rel-tag">child</span><a class="linkperson" data-id="${c.id}">${escapeHtml(c.name)}</a></div>`).join('')}
+          ${(!father && !mother && spouses.length===0 && siblings.length===0 && children.length===0) ? '<div class="scrollnote" style="padding:0;">No recorded relationships yet.</div>' : ''}
+        </div>
+        ${personMigs.length ? `
+        <hr class="divider">
+        <div><div class="small-label" style="margin-bottom:8px;">Migrations</div>
+        ${personMigs.map(m=>`<div class="rel-row"><span class="rel-tag" style="min-width:auto;">${escapeHtml(m.year||'?')}</span>${escapeHtml(m.from||'?')} → ${escapeHtml(m.to||'?')}</div>`).join('')}
+        </div>` : ''}
+        ${p.notes ? `<hr class="divider"><div><div class="small-label" style="margin-bottom:8px;">Notes</div><div class="notes-block">${escapeHtml(p.notes)}</div></div>` : ''}
+      </div>
+    `;
+    document.getElementById('btn-edit-this').addEventListener('click', ()=>openEditPerson(p.id));
+    el.querySelectorAll('.linkperson').forEach(a=>{
+      a.addEventListener('click', ()=>{ selectedPersonId = a.dataset.id; renderPersonList(); renderPersonDetail(); });
+    });
+  }
+
+  const modalPerson = document.getElementById('modal-person');
+  function populatePersonSelects(excludeId){
+    const opts = people.filter(p=>p.id!==excludeId).sort((a,b)=>a.name.localeCompare(b.name));
+    const blank = '<option value="">— none —</option>';
+    document.getElementById('p-father').innerHTML = blank + opts.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    document.getElementById('p-mother').innerHTML = blank + opts.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    document.getElementById('p-spouses').innerHTML = opts.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    document.getElementById('p-siblings').innerHTML = opts.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  }
+  function openAddPerson(){
+    anyModalOpen = true;
+    document.getElementById('person-modal-title').textContent = 'Add person';
+    document.getElementById('person-id').value = '';
+    ['p-name','p-altnames','p-birthdate','p-birthplace','p-deathdate','p-deathplace','p-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('p-sex').value='';
+    populatePersonSelects(null);
+    document.getElementById('p-father').value='';
+    document.getElementById('p-mother').value='';
+    document.getElementById('btn-delete-person').style.display='none';
+    modalPerson.classList.add('open');
+    setTimeout(()=>document.getElementById('p-name').focus(), 30);
+  }
+  function openEditPerson(id){
+    anyModalOpen = true;
+    const p = personById(id);
+    if(!p) return;
+    document.getElementById('person-modal-title').textContent = 'Edit person';
+    document.getElementById('person-id').value = p.id;
+    document.getElementById('p-name').value = p.name || '';
+    document.getElementById('p-altnames').value = p.altNames || '';
+    document.getElementById('p-sex').value = p.sex || '';
+    document.getElementById('p-birthdate').value = p.birthDate || '';
+    document.getElementById('p-birthplace').value = p.birthPlace || '';
+    document.getElementById('p-deathdate').value = p.deathDate || '';
+    document.getElementById('p-deathplace').value = p.deathPlace || '';
+    document.getElementById('p-notes').value = p.notes || '';
+    populatePersonSelects(p.id);
+    document.getElementById('p-father').value = p.fatherId || '';
+    document.getElementById('p-mother').value = p.motherId || '';
+    Array.from(document.getElementById('p-spouses').options).forEach(o=>{ o.selected = (p.spouseIds||[]).includes(o.value); });
+    Array.from(document.getElementById('p-siblings').options).forEach(o=>{ o.selected = (p.siblingIds||[]).includes(o.value); });
+    document.getElementById('btn-delete-person').style.display='inline-block';
+    modalPerson.classList.add('open');
+  }
+  function closePersonModal(){ modalPerson.classList.remove('open'); anyModalOpen = false; }
+  document.getElementById('btn-add-person').addEventListener('click', openAddPerson);
+  document.getElementById('btn-cancel-person').addEventListener('click', closePersonModal);
+  modalPerson.addEventListener('click', e=>{ if(e.target===modalPerson) closePersonModal(); });
+
+  document.getElementById('btn-save-person').addEventListener('click', async ()=>{
+    const name = document.getElementById('p-name').value.trim();
+    if(!name){ alert('Name is required.'); return; }
+    let id = document.getElementById('person-id').value;
+    const spouseIds = Array.from(document.getElementById('p-spouses').selectedOptions).map(o=>o.value);
+    const siblingIds = Array.from(document.getElementById('p-siblings').selectedOptions).map(o=>o.value);
+    const data = {
+      name,
+      altNames: document.getElementById('p-altnames').value.trim(),
+      sex: document.getElementById('p-sex').value,
+      birthDate: document.getElementById('p-birthdate').value.trim(),
+      birthPlace: document.getElementById('p-birthplace').value.trim(),
+      deathDate: document.getElementById('p-deathdate').value.trim(),
+      deathPlace: document.getElementById('p-deathplace').value.trim(),
+      fatherId: document.getElementById('p-father').value || null,
+      motherId: document.getElementById('p-mother').value || null,
+      spouseIds,
+      siblingIds,
+      notes: document.getElementById('p-notes').value.trim(),
+    };
+    if(id){
+      Object.assign(personById(id), data);
+    } else {
+      id = uid();
+      people.push(Object.assign({id}, data));
+      selectedPersonId = id;
+    }
+    people.forEach(p=>{
+      const shouldHaveSpouse = spouseIds.includes(p.id);
+      const hasSpouse = (p.spouseIds||[]).includes(id);
+      if(shouldHaveSpouse && !hasSpouse){ p.spouseIds = (p.spouseIds||[]).concat([id]); }
+      if(!shouldHaveSpouse && hasSpouse && p.id !== id){ p.spouseIds = (p.spouseIds||[]).filter(x=>x!==id); }
+
+      const shouldHaveSib = siblingIds.includes(p.id);
+      const hasSib = (p.siblingIds||[]).includes(id);
+      if(shouldHaveSib && !hasSib){ p.siblingIds = (p.siblingIds||[]).concat([id]); }
+      if(!shouldHaveSib && hasSib && p.id !== id){ p.siblingIds = (p.siblingIds||[]).filter(x=>x!==id); }
+    });
+    await saveData(false);
+    closePersonModal();
+    renderAll();
+  });
+
+  document.getElementById('btn-delete-person').addEventListener('click', async ()=>{
+    const id = document.getElementById('person-id').value;
+    if(!id) return;
+    if(!confirm('Delete this person? Their migrations will also be removed. This cannot be undone.')) return;
+    people = people.filter(p=>p.id!==id);
+    people.forEach(p=>{
+      if(p.fatherId===id) p.fatherId=null;
+      if(p.motherId===id) p.motherId=null;
+      p.spouseIds = (p.spouseIds||[]).filter(x=>x!==id);
+      p.siblingIds = (p.siblingIds||[]).filter(x=>x!==id);
+    });
+    migrations = migrations.filter(m=>m.personId!==id);
+    if(selectedPersonId===id) selectedPersonId=null;
+    await saveData(false);
+    closePersonModal();
+    renderAll();
+  });
+
+  function computeGenerations(){
+    const gen = {};
+    const visiting = new Set();
+    function genOf(id){
+      if(gen[id] !== undefined) return gen[id];
+      if(visiting.has(id)) return 0;
+      visiting.add(id);
+      const p = personById(id);
+      let g = 0;
+      if(p){
+        const parents = [p.fatherId, p.motherId].filter(pid => pid && personById(pid));
+        if(parents.length){ g = 1 + Math.max(...parents.map(pid=>genOf(pid))); }
+      }
+      visiting.delete(id);
+      gen[id] = g;
+      return g;
+    }
+    people.forEach(p=>genOf(p.id));
+    return gen;
+  }
+
+  function renderTree(){
+    const canvas = document.getElementById('tree-rows');
+    const svg = document.getElementById('tree-svg');
+    if(people.length === 0){
+      canvas.innerHTML = '<div class="empty-state"><h3>Nothing to draw yet</h3><p>Add people and link parents or spouses to see the tree.</p></div>';
+      svg.innerHTML=''; svg.setAttribute('width',0); svg.setAttribute('height',0);
+      return;
+    }
+    const gen = computeGenerations();
+    const maxGen = Math.max(...Object.values(gen));
+    const rows = [];
+    for(let g=0; g<=maxGen; g++){ rows.push(people.filter(p=>gen[p.id]===g)); }
+
+    let prevIdx = {};
+    rows.forEach((row, gi) => {
+      const capturedPrev = prevIdx;
+      if(gi>0){
+        row.sort((a,b)=>{
+          const av = avgParentPos(a, capturedPrev, gi); const bv = avgParentPos(b, capturedPrev, gi);
+          return (av-bv) || a.name.localeCompare(b.name);
+        });
+      } else {
+        row.sort((a,b)=>a.name.localeCompare(b.name));
+      }
+      for(let i=0;i<row.length;i++){
+        const person = row[i];
+        (person.spouseIds||[]).forEach(sid=>{
+          const sIdx = row.findIndex(p=>p.id===sid);
+          if(sIdx > i+1){ const [sp] = row.splice(sIdx,1); row.splice(i+1,0,sp); }
+        });
+      }
+      const idx = {};
+      row.forEach((p,i)=>idx[p.id]=i);
+      prevIdx = idx;
+      function avgParentPos(p, prevMap, genIndex){
+        const parents = [p.fatherId, p.motherId].filter(pid=>pid && gen[pid]===genIndex-1);
+        if(!parents.length) return 999;
+        const positions = parents.map(pid => prevMap[pid] !== undefined ? prevMap[pid] : 999);
+        return positions.reduce((a,b)=>a+b,0)/positions.length;
+      }
+    });
+
+    canvas.innerHTML = rows.map((row) => `
+      <div class="gen-row">
+        ${row.map(p => `
+          <div class="tree-card" data-id="${p.id}">
+            <div class="name">${escapeHtml(p.name)}</div>
+            <div class="years">${escapeHtml(p.birthDate||'?')}${p.deathDate ? ' – '+escapeHtml(p.deathDate) : ''}</div>
+            ${p.birthPlace ? `<div class="place">${escapeHtml(p.birthPlace)}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+
+    canvas.querySelectorAll('.tree-card').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        selectedPersonId = card.dataset.id;
+        renderPersonList(); renderPersonDetail();
+        document.getElementById('sec-people').scrollIntoView({behavior:'smooth'});
+      });
+    });
+    requestAnimationFrame(drawTreeConnectors);
+  }
+
+  function drawTreeConnectors(){
+    const canvas = document.getElementById('tree-canvas');
+    const rows = document.getElementById('tree-rows');
+    const svg = document.getElementById('tree-svg');
+    const w = rows.scrollWidth, h = rows.scrollHeight;
+    svg.setAttribute('width', w);
+    svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    let lines = '';
+    const cardEls = {};
+    canvas.querySelectorAll('.tree-card').forEach(el=>{ cardEls[el.dataset.id]=el; });
+    const canvasRect = canvas.getBoundingClientRect();
+    function rectOf(el){
+      const r = el.getBoundingClientRect();
+      return { top: r.top-canvasRect.top, left:r.left-canvasRect.left, width:r.width, height:r.height };
+    }
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const lineColor = isDark ? '#409cff' : '#0071e3';
+    const spouseColor = isDark ? '#bf5af2' : '#8e3bd1';
+
+    people.forEach(p=>{
+      const childEl = cardEls[p.id];
+      if(!childEl) return;
+      const cr = rectOf(childEl);
+      const parents = [p.fatherId, p.motherId].filter(pid=>pid && cardEls[pid]);
+      if(parents.length){
+        const pts = parents.map(pid=>rectOf(cardEls[pid]));
+        const midX = pts.reduce((s,r)=>s+r.left+r.width/2,0)/pts.length;
+        const midY = Math.max(...pts.map(r=>r.top+r.height));
+        lines += `<path d="M ${midX} ${midY} L ${midX} ${midY+16} L ${cr.left+cr.width/2} ${midY+16} L ${cr.left+cr.width/2} ${cr.top}" fill="none" stroke="${lineColor}" stroke-width="1.5"/>`;
+        pts.forEach(r=>{
+          lines += `<line x1="${r.left+r.width/2}" y1="${r.top+r.height}" x2="${midX}" y2="${midY}" stroke="${lineColor}" stroke-width="1.5"/>`;
+        });
+      }
+    });
+    const drawnPairs = new Set();
+    people.forEach(p=>{
+      (p.spouseIds||[]).forEach(sid=>{
+        const key = [p.id,sid].sort().join('-');
+        if(drawnPairs.has(key)) return;
+        drawnPairs.add(key);
+        const a = cardEls[p.id], b = cardEls[sid];
+        if(!a||!b) return;
+        const ra = rectOf(a), rb = rectOf(b);
+        if(Math.abs(ra.top-rb.top) < 5){
+          const y = ra.top + ra.height/2;
+          const x1 = ra.left < rb.left ? ra.left+ra.width : ra.left;
+          const x2 = ra.left < rb.left ? rb.left : rb.left+rb.width;
+          lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${spouseColor}" stroke-width="2" stroke-dasharray="3,4"/>`;
+        }
+      });
+    });
+    svg.innerHTML = lines;
+  }
+  window.addEventListener('resize', ()=>drawTreeConnectors());
+
+  function renderMigrations(){
+    const q = (document.getElementById('mig-search').value||'').toLowerCase();
+    const list = document.getElementById('mig-list');
+    if(migrations.length===0){
+      list.innerHTML = `<div class="empty-state glass"><h3>No migrations recorded</h3><p>Log each move you know about — even partial information helps spot the pattern.</p><button class="btn btn-primary" id="empty-add-mig">+ Add a migration</button></div>`;
+      const b = document.getElementById('empty-add-mig');
+      if(b) b.addEventListener('click', openAddMig);
+      return;
+    }
+    const filtered = migrations.filter(m=>{
+      const name = personName(m.personId).toLowerCase();
+      return name.includes(q) || (m.from||'').toLowerCase().includes(q) || (m.to||'').toLowerCase().includes(q);
+    }).sort((a,b)=>(a.year||'').localeCompare(b.year||''));
+    const confLabel = {documented:'documented', story:'family story', hypothesis:'hypothesis', unknown:'unknown reason'};
+    list.innerHTML = filtered.map(m=>`
+      <div class="mig-card conf-${m.confidence||'unknown'}" data-id="${m.id}">
+        <div class="mig-top">
+          <div class="mig-route">${escapeHtml(personName(m.personId))}: ${escapeHtml(m.from||'?')} → ${escapeHtml(m.to||'?')}</div>
+          <span class="mig-badge conf-${m.confidence||'unknown'}">${confLabel[m.confidence]||'unknown reason'}</span>
+        </div>
+        <div class="mig-meta">${m.year ? escapeHtml(m.year) : 'date unknown'}</div>
+        ${m.notes ? `<div class="mig-notes">${escapeHtml(m.notes)}</div>` : ''}
+        <div style="margin-top:9px;"><button class="btn btn-ghost btn-small edit-mig-btn" data-id="${m.id}">Edit</button></div>
+      </div>
+    `).join('');
+    list.querySelectorAll('.edit-mig-btn').forEach(b=>b.addEventListener('click', ()=>openEditMig(b.dataset.id)));
+  }
+  document.getElementById('mig-search').addEventListener('input', renderMigrations);
+
+  const modalMig = document.getElementById('modal-mig');
+  function populateMigPersonSelect(selectedId){
+    const opts = people.slice().sort((a,b)=>a.name.localeCompare(b.name));
+    document.getElementById('m-person').innerHTML = opts.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    if(selectedId) document.getElementById('m-person').value = selectedId;
+  }
+  function openAddMig(){
+    if(people.length===0){ alert('Add at least one person first.'); return; }
+    anyModalOpen = true;
+    document.getElementById('mig-modal-title').textContent='Add migration';
+    document.getElementById('m-id').value='';
+    populateMigPersonSelect(selectedPersonId);
+    document.getElementById('m-from').value='';
+    document.getElementById('m-to').value='';
+    document.getElementById('m-year').value='';
+    document.getElementById('m-confidence').value='unknown';
+    document.getElementById('m-notes').value='';
+    document.getElementById('btn-delete-mig').style.display='none';
+    modalMig.classList.add('open');
+  }
+  function openEditMig(id){
+    anyModalOpen = true;
+    const m = migrations.find(x=>x.id===id);
+    if(!m) return;
+    document.getElementById('mig-modal-title').textContent='Edit migration';
+    document.getElementById('m-id').value = m.id;
+    populateMigPersonSelect(m.personId);
+    document.getElementById('m-from').value = m.from||'';
+    document.getElementById('m-to').value = m.to||'';
+    document.getElementById('m-year').value = m.year||'';
+    document.getElementById('m-confidence').value = m.confidence||'unknown';
+    document.getElementById('m-notes').value = m.notes||'';
+    document.getElementById('btn-delete-mig').style.display='inline-block';
+    modalMig.classList.add('open');
+  }
+  function closeMigModal(){ modalMig.classList.remove('open'); anyModalOpen = false; }
+  document.getElementById('btn-add-mig').addEventListener('click', openAddMig);
+  document.getElementById('btn-cancel-mig').addEventListener('click', closeMigModal);
+  modalMig.addEventListener('click', e=>{ if(e.target===modalMig) closeMigModal(); });
+
+  document.getElementById('btn-save-mig').addEventListener('click', async ()=>{
+    const personId = document.getElementById('m-person').value;
+    if(!personId){ alert('Choose a person.'); return; }
+    let id = document.getElementById('m-id').value;
+    const data = {
+      personId,
+      from: document.getElementById('m-from').value.trim(),
+      to: document.getElementById('m-to').value.trim(),
+      year: document.getElementById('m-year').value.trim(),
+      confidence: document.getElementById('m-confidence').value,
+      notes: document.getElementById('m-notes').value.trim(),
+    };
+    if(id){ Object.assign(migrations.find(m=>m.id===id), data); }
+    else { migrations.push(Object.assign({id:uid()}, data)); }
+    await saveData(false);
+    closeMigModal();
+    renderAll();
+  });
+  document.getElementById('btn-delete-mig').addEventListener('click', async ()=>{
+    const id = document.getElementById('m-id').value;
+    if(!id) return;
+    if(!confirm('Delete this migration record?')) return;
+    migrations = migrations.filter(m=>m.id!==id);
+    await saveData(false);
+    closeMigModal();
+    renderAll();
+  });
+
+  const DESTS = [
+    {key:'egypt', label:'Egypt', match:/egypt|alexandria|cairo/i, x:660, y:150},
+    {key:'safrica', label:'South Africa', match:/south africa|johannesburg|cape town|durban|transvaal/i, x:660, y:280},
+    {key:'australia', label:'Australia', match:/australia|sydney|melbourne|perth|adelaide/i, x:660, y:410},
+    {key:'uk', label:'United Kingdom', match:/uk|united kingdom|england|london|scotland|wales/i, x:270, y:60},
+  ];
+  const GREECE_POS = {x:150, y:280};
+
+  function renderBoard(){
+    const svg = document.getElementById('board-svg');
+    const listEl = document.getElementById('board-list');
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const cText = isDark ? '#f5f5f7' : '#1d1d1f';
+    const cSub = isDark ? '#98989d' : '#6e6e73';
+    const cCard = isDark ? '#1e1e20' : '#ffffff';
+
+    if(migrations.length===0){
+      svg.innerHTML = `<text x="450" y="240" text-anchor="middle" font-size="16" fill="${cSub}">The board is empty — add migrations to see the routes</text>`;
+      listEl.innerHTML='';
+      return;
+    }
+    const groups = {egypt:[], safrica:[], australia:[], uk:[], other:[]};
+    migrations.forEach(m=>{
+      const dest = DESTS.find(d=>d.match.test(m.to||''));
+      if(dest) groups[dest.key].push(m); else groups.other.push(m);
+    });
+    const colorFor = {documented:'#0071e3', story:'#c5690a', hypothesis:'#8e3bd1', unknown:'#86868b'};
+    const dashFor = {documented:'0', story:'7,4', hypothesis:'7,4', unknown:'2,4'};
+    const confRank = {documented:4, story:2, hypothesis:3, unknown:1};
+    function dominant(list){
+      if(list.length===0) return null;
+      let best = 'unknown';
+      list.forEach(m=>{ if((confRank[m.confidence]||1) >= (confRank[best]||1)) best = m.confidence; });
+      return best;
+    }
+
+    let svgContent = `
+      <circle cx="${GREECE_POS.x}" cy="${GREECE_POS.y}" r="36" fill="#0071e3" opacity="0.12"/>
+      <circle cx="${GREECE_POS.x}" cy="${GREECE_POS.y}" r="30" fill="${cCard}" stroke="#0071e3" stroke-width="2"/>
+      <text x="${GREECE_POS.x}" y="${GREECE_POS.y+5}" text-anchor="middle" font-weight="600" font-size="13" fill="${cText}">Greece</text>
+    `;
+    DESTS.forEach(d=>{
+      const list = groups[d.key];
+      const best = dominant(list);
+      if(best){
+        svgContent += `<path d="M ${GREECE_POS.x+30} ${GREECE_POS.y} Q ${(GREECE_POS.x+d.x)/2} ${(GREECE_POS.y+d.y)/2 - 30}, ${d.x-32} ${d.y}"
+          fill="none" stroke="${colorFor[best]}" stroke-width="2.5" stroke-dasharray="${dashFor[best]}"/>`;
+      }
+      const r = 22 + Math.min(list.length*3, 20);
+      svgContent += `
+        <circle cx="${d.x}" cy="${d.y}" r="${r}" fill="${cCard}" stroke="${list.length? cText : '#c7c7cc'}" stroke-width="1.5"/>
+        <text x="${d.x}" y="${d.y-2}" text-anchor="middle" font-weight="600" font-size="12.5" fill="${cText}">${d.label}</text>
+        <text x="${d.x}" y="${d.y+14}" text-anchor="middle" font-size="11" fill="${cSub}">${list.length} record${list.length===1?'':'s'}</text>
+      `;
+    });
+    svg.innerHTML = svgContent;
+
+    const confLabel = {documented:'documented', story:'family story', hypothesis:'hypothesis', unknown:'unknown reason'};
+    let listHtml = '';
+    DESTS.concat([{key:'other', label:'Elsewhere / unmatched'}]).forEach(d=>{
+      const list = groups[d.key];
+      if(!list || list.length===0) return;
+      listHtml += `<h3>${d.label}</h3>`;
+      list.forEach(m=>{
+        listHtml += `<div class="mig-card conf-${m.confidence||'unknown'}">
+          <div class="mig-top">
+            <div class="mig-route">${escapeHtml(personName(m.personId))}: ${escapeHtml(m.from||'?')} → ${escapeHtml(m.to||'?')}</div>
+            <span class="mig-badge conf-${m.confidence||'unknown'}">${confLabel[m.confidence]||'unknown reason'}</span>
+          </div>
+          <div class="mig-meta">${m.year ? escapeHtml(m.year) : 'date unknown'}</div>
+          ${m.notes ? `<div class="mig-notes">${escapeHtml(m.notes)}</div>` : ''}
+        </div>`;
+      });
+    });
+    listEl.innerHTML = listHtml || '<div class="scrollnote">No destinations matched yet — check spelling of the "to" field.</div>';
+  }
+
+  function applyTheme(mode){
+    document.documentElement.setAttribute('data-theme', mode);
+    document.getElementById('btn-theme').innerHTML = (mode === 'dark' ? '☀' : '◐') + '<span class="lbl">Theme</span>';
+    drawTreeConnectors();
+    renderBoard();
+  }
+  let theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  applyTheme(theme);
+  document.getElementById('btn-theme').addEventListener('click', ()=>{ theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(theme); });
+
+  // ---------- EXPORT MENU ----------
+  const exportMenu = document.getElementById('export-menu');
+  document.getElementById('btn-export-menu').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    exportMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', ()=>exportMenu.classList.remove('open'));
+
+  function download(filename, content, mime){
+    const blob = new Blob([content], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('exp-backup').addEventListener('click', ()=>{
+    download('family-case-file-backup.json', JSON.stringify({people, migrations}, null, 2), 'application/json');
+    exportMenu.classList.remove('open');
+  });
+
+  document.getElementById('exp-list').addEventListener('click', ()=>{
+    function csvEscape(v){ return '"' + String(v==null?'':v).replace(/"/g,'""') + '"'; }
+    const header = ['Name','Also known as','Sex','Born','Birthplace','Died','Place of death','Father','Mother','Spouses','Siblings','Notes'];
+    const rows = people.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>[
+      p.name, p.altNames, p.sex, p.birthDate, p.birthPlace, p.deathDate, p.deathPlace,
+      p.fatherId ? personName(p.fatherId) : '',
+      p.motherId ? personName(p.motherId) : '',
+      (p.spouseIds||[]).map(personName).join('; '),
+      (p.siblingIds||[]).map(personName).join('; '),
+      p.notes
+    ]);
+    const csv = [header, ...rows].map(r=>r.map(csvEscape).join(',')).join('\r\n');
+    download('family-case-file-people.csv', csv, 'text/csv');
+    exportMenu.classList.remove('open');
+  });
+
+  document.getElementById('exp-branches').addEventListener('click', ()=>{
+    const visited = new Set();
+    const lines = [];
+    function printPerson(p, depth){
+      const indent = '  '.repeat(depth);
+      let line = indent + p.name;
+      if(p.birthDate || p.deathDate) line += ` (${p.birthDate||'?'}${p.deathDate ? ' – '+p.deathDate : ''})`;
+      if(visited.has(p.id)){ lines.push(line + '  [see above]'); return; }
+      visited.add(p.id);
+      const spouses = (p.spouseIds||[]).map(id=>personById(id)).filter(Boolean);
+      if(spouses.length) line += '  — m. ' + spouses.map(s=>s.name).join(', ');
+      lines.push(line);
+      const children = people.filter(c=>c.fatherId===p.id || c.motherId===p.id).sort((a,b)=>a.name.localeCompare(b.name));
+      children.forEach(c=>printPerson(c, depth+1));
+    }
+    const roots = people.filter(p=>!p.fatherId && !p.motherId).sort((a,b)=>a.name.localeCompare(b.name));
+    roots.forEach(r=>{ printPerson(r,0); lines.push(''); });
+    const unplaced = people.filter(p=>!visited.has(p.id));
+    if(unplaced.length){
+      lines.push('— Not yet linked into a branch —');
+      unplaced.forEach(p=>lines.push(p.name));
+    }
+    download('family-case-file-branches.txt', lines.join('\n') || 'No one recorded yet.', 'text/plain');
+    exportMenu.classList.remove('open');
+  });
+
+  document.getElementById('btn-import').addEventListener('click', ()=>{ document.getElementById('file-import').click(); });
+  document.getElementById('file-import').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt)=>{
+      try{
+        const parsed = JSON.parse(evt.target.result);
+        if(!confirm('Import this backup? It will replace everything currently in the shared file for everyone.')) return;
+        people = parsed.people || [];
+        migrations = parsed.migrations || [];
+        selectedPersonId = null;
+        await saveData(true);
+        renderAll();
+      }catch(err){ alert('That file could not be read as a valid backup.'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  loadData(false);
+})();
+</script>
+</body>
+</html>
