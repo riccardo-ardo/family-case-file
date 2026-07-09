@@ -197,10 +197,10 @@
 
   #tree-scroll{overflow:auto; min-height:320px; padding:20px 6px;}
   #tree-canvas{position:relative; padding:24px 30px;}
-  .gen-row{display:flex; gap:20px; margin-bottom:64px; align-items:flex-start;}
+  .gen-row{display:flex; gap:20px; margin-bottom:64px; align-items:flex-start; width:max-content; flex-wrap:nowrap;}
   .tree-card{
     background:var(--glass-strong); border:1px solid var(--border); border-radius:14px; padding:10px 14px;
-    min-width:132px; max-width:170px; text-align:center; cursor:pointer; position:relative; box-shadow:var(--shadow);
+    min-width:132px; max-width:170px; flex:0 0 auto; text-align:center; cursor:pointer; position:relative; box-shadow:var(--shadow);
     transition:transform .15s ease;
   }
   .tree-card:hover{transform:translateY(-2px); border-color:var(--blue);}
@@ -502,8 +502,8 @@
   // its Bin ID and Master Key below. Everyone who opens this same file will
   // then read and write the same shared data.
   const CONFIG = {
-    JSONBIN_ID: '6a4ff7adf5f4af5e29792ad6',
-    JSONBIN_KEY: '$2a$10$TckKi6ppJW2MOaBYNYg5xe.MpVd/D0bby8ovrw2uO1X5xhJ5ba94S',
+    JSONBIN_ID: 'PASTE_YOUR_BIN_ID_HERE',
+    JSONBIN_KEY: 'PASTE_YOUR_MASTER_KEY_HERE',
   };
   // ==========================================
 
@@ -972,6 +972,7 @@
     svg.innerHTML = lines;
   }
   window.addEventListener('resize', ()=>drawTreeConnectors());
+  window.addEventListener('load', ()=>setTimeout(drawTreeConnectors, 150));
 
   function renderMigrations(){
     const q = (document.getElementById('mig-search').value||'').toLowerCase();
