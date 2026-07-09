@@ -885,14 +885,20 @@
     }
     people.forEach(p=>genOf(p.id));
 
-    // Spouses should sit in the same row even if only one side's ancestry
-    // is recorded, and children must stay strictly below their parents
-    // after that adjustment. Relax both rules until stable.
+    // Spouses and siblings should sit in the same row even if only one
+    // side's ancestry is recorded, and children must stay strictly below
+    // their parents after that adjustment. Relax all three rules until stable.
     let changed = true, guard = 0;
     while(changed && guard < people.length + 20){
       changed = false; guard++;
       people.forEach(p=>{
         (p.spouseIds||[]).forEach(sid=>{
+          if(gen[sid] === undefined) return;
+          const top = Math.max(gen[p.id], gen[sid]);
+          if(gen[p.id] !== top){ gen[p.id] = top; changed = true; }
+          if(gen[sid] !== top){ gen[sid] = top; changed = true; }
+        });
+        (p.siblingIds||[]).forEach(sid=>{
           if(gen[sid] === undefined) return;
           const top = Math.max(gen[p.id], gen[sid]);
           if(gen[p.id] !== top){ gen[p.id] = top; changed = true; }
@@ -959,6 +965,30 @@
       }
       u.parentUnit = parentUnit;
     });
+    // If a unit has no recorded parents of its own, but one of its members
+    // has a sibling whose unit DOES know its parents, adopt that same
+    // parent unit — this is what makes a sibling link actually pull two
+    // people onto the same branch, not just tag them with a label.
+    let sibChanged = true, sibGuard = 0;
+    while(sibChanged && sibGuard < units.length + 10){
+      sibChanged = false; sibGuard++;
+      units.forEach(u=>{
+        if(u.parentUnit !== null) return;
+        for(const pid of u.members){
+          const person = personById(pid);
+          if(!person) continue;
+          for(const sid of (person.siblingIds||[])){
+            const sibUnitIdx = personToUnit[sid];
+            if(sibUnitIdx !== undefined && units[sibUnitIdx].parentUnit !== null){
+              u.parentUnit = units[sibUnitIdx].parentUnit;
+              sibChanged = true;
+              break;
+            }
+          }
+          if(u.parentUnit !== null) break;
+        }
+      });
+    }
     units.forEach((u,idx)=>{ if(u.parentUnit!==null) units[u.parentUnit].children.push(idx); });
 
     const visiting = new Set();
