@@ -220,6 +220,7 @@
   .mig-card.conf-story{border-left-color:var(--orange);}
   .mig-card.conf-hypothesis{border-left-color:var(--purple);}
   .mig-card.conf-unknown{border-left-color:var(--gray);}
+  .mig-card.conf-inferred{border-left-color:var(--text-tertiary); border-style:dashed;}
   .mig-top{display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px;}
   .mig-route{font-weight:600; font-size:15px;}
   .mig-badge{font-size:10.5px; font-weight:600; padding:3px 10px; border-radius:980px; background:var(--gray-bg); color:var(--text-secondary);}
@@ -380,7 +381,7 @@
 
   <section id="sec-board">
     <div class="section-head">
-      <div><h2>Routes</h2><p>Every migration, gathered by destination — line style shows how solid the evidence is</p></div>
+      <div><h2>Routes</h2><p>Built from logged migrations and from birthplaces recorded in the family tree — line style shows how solid the evidence is</p></div>
     </div>
     <div class="glass board-wrap">
       <svg id="board-svg" viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -389,7 +390,8 @@
       <span><i class="swatch" style="background:var(--blue);"></i>documented</span>
       <span><i class="swatch" style="background:var(--orange);"></i>family story</span>
       <span><i class="swatch" style="background:var(--purple);"></i>hypothesis</span>
-      <span><i class="swatch" style="background:var(--gray);"></i>unknown</span>
+      <span><i class="swatch" style="background:var(--gray);"></i>unknown reason</span>
+      <span><i class="swatch" style="background:var(--text-tertiary);"></i>inferred from birthplaces</span>
     </div>
     <div class="board-list" id="board-list"></div>
   </section>
@@ -1218,7 +1220,7 @@
     if(migrations.length===0){
       list.innerHTML = `<div class="empty-state glass"><h3>No migrations recorded</h3><p>Log each move you know about — even partial information helps spot the pattern.</p><button class="btn btn-primary" id="empty-add-mig">+ Add a migration</button></div>`;
       const b = document.getElementById('empty-add-mig');
-      if(b) b.addEventListener('click', openAddMig);
+      if(b) b.addEventListener('click', ()=>openAddMig());
       return;
     }
     const filtered = migrations.filter(m=>{
@@ -1270,16 +1272,18 @@
     document.getElementById('m-person').innerHTML = opts.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
     if(selectedId) document.getElementById('m-person').value = selectedId;
   }
-  function openAddMig(){
+  function openAddMig(prefill){
     if(people.length===0){ alert('Add at least one person first.'); return; }
     anyModalOpen = true;
     document.getElementById('mig-modal-title').textContent='Add migration';
     document.getElementById('m-id').value='';
-    populateMigPersonSelect(selectedPersonId);
-    currentStops = [{place:'',year:''},{place:'',year:''}];
+    populateMigPersonSelect((prefill && prefill.personId) || selectedPersonId);
+    currentStops = (prefill && prefill.from && prefill.to)
+      ? [{place:prefill.from, year:''}, {place:prefill.to, year:''}]
+      : [{place:'',year:''},{place:'',year:''}];
     renderStopRows();
-    document.getElementById('m-confidence').value='unknown';
-    document.getElementById('m-notes').value='';
+    document.getElementById('m-confidence').value = (prefill && prefill.from) ? 'hypothesis' : 'unknown';
+    document.getElementById('m-notes').value = (prefill && prefill.from) ? 'Inferred from birthplaces recorded in the family tree — confirm or adjust this.' : '';
     document.getElementById('btn-delete-mig').style.display='none';
     modalMig.classList.add('open');
   }
@@ -1298,7 +1302,7 @@
     modalMig.classList.add('open');
   }
   function closeMigModal(){ modalMig.classList.remove('open'); anyModalOpen = false; }
-  document.getElementById('btn-add-mig').addEventListener('click', openAddMig);
+  document.getElementById('btn-add-mig').addEventListener('click', ()=>openAddMig());
   document.getElementById('btn-cancel-mig').addEventListener('click', closeMigModal);
   modalMig.addEventListener('click', e=>{ if(e.target===modalMig) closeMigModal(); });
 
@@ -1330,21 +1334,73 @@
     renderAll();
   });
 
+  function placeToCountry(text){
+    const t = (text||'').trim();
+    if(!t) return '';
+    if(/greece|kalamata|athens|piraeus|thessaloniki/i.test(t)) return 'Greece';
+    if(/egypt|alexandria|cairo|port tawfik|port said/i.test(t)) return 'Egypt';
+    if(/south africa|johannesburg|cape town|durban|transvaal|pretoria/i.test(t)) return 'South Africa';
+    if(/australia|sydney|melbourne|perth|adelaide|brisbane/i.test(t)) return 'Australia';
+    if(/\buk\b|united kingdom|england|london|scotland|wales/i.test(t)) return 'United Kingdom';
+    return t;
+  }
+  function originLabelFor(m){
+    const stops = m.stops||[];
+    return placeToCountry(stops.length ? stops[0].place : '') || 'Unspecified';
+  }
   function destLabelFor(m){
     const stops = m.stops||[];
-    const last = stops.length ? stops[stops.length-1].place : '';
-    const t = (last||'').trim();
-    if(/egypt|alexandria|cairo/i.test(t)) return 'Egypt';
-    if(/south africa|johannesburg|cape town|durban|transvaal/i.test(t)) return 'South Africa';
-    if(/australia|sydney|melbourne|perth|adelaide/i.test(t)) return 'Australia';
-    if(/uk|united kingdom|england|london|scotland|wales/i.test(t)) return 'United Kingdom';
-    return t || 'Unspecified';
+    return placeToCountry(stops.length ? stops[stops.length-1].place : '') || 'Unspecified';
   }
   function surnameOf(personId){
     const p = personById(personId);
     if(!p) return '';
     const parts = p.name.trim().split(/\s+/);
     return parts[parts.length-1].replace(/[()]/g,'');
+  }
+
+  // Gathers edges (country -> country) from two sources: migrations you've
+  // logged directly, and birthplace differences between a person and their
+  // parents in the family tree (a quiet signal that a move happened even if
+  // nobody logged it as a migration yet).
+  function buildRouteGraph(){
+    const edgeMap = {};
+    function addEdge(from, to, conf, source, personId, extra){
+      if(!from || !to || from===to) return;
+      const key = from+'→→'+to;
+      if(!edgeMap[key]) edgeMap[key] = {from, to, items:[]};
+      edgeMap[key].items.push({conf, source, personId, extra});
+    }
+    migrations.forEach(m=>{
+      addEdge(originLabelFor(m), destLabelFor(m), m.confidence||'unknown', 'logged', m.personId, m);
+    });
+    people.forEach(p=>{
+      if(!p.birthPlace) return;
+      const childCountry = placeToCountry(p.birthPlace);
+      if(!childCountry) return;
+      [p.fatherId, p.motherId].forEach(pid=>{
+        if(!pid) return;
+        const parent = personById(pid);
+        if(!parent || !parent.birthPlace) return;
+        const parentCountry = placeToCountry(parent.birthPlace);
+        if(parentCountry && parentCountry !== childCountry){
+          addEdge(parentCountry, childCountry, 'inferred', 'inferred', p.id, {parent, child:p});
+        }
+      });
+    });
+
+    const nodePeople = {};
+    function touch(country, personId){
+      if(!country) return;
+      (nodePeople[country] = nodePeople[country] || new Set()).add(personId);
+    }
+    people.forEach(p=>{ if(p.birthPlace) touch(placeToCountry(p.birthPlace), p.id); });
+    migrations.forEach(m=>{ touch(destLabelFor(m), m.personId); touch(originLabelFor(m), m.personId); });
+
+    const countrySet = new Set(Object.keys(nodePeople));
+    Object.values(edgeMap).forEach(e=>{ countrySet.add(e.from); countrySet.add(e.to); });
+
+    return { edgeMap, nodePeople, countries: Array.from(countrySet) };
   }
 
   function renderBoard(){
@@ -1354,76 +1410,104 @@
     const cText = isDark ? '#f5f5f7' : '#1d1d1f';
     const cSub = isDark ? '#98989d' : '#6e6e73';
     const cCard = isDark ? '#1e1e20' : '#ffffff';
+    const cTertiary = isDark ? '#6e6e73' : '#a1a1a6';
 
-    if(migrations.length===0){
+    const { edgeMap, nodePeople, countries } = buildRouteGraph();
+
+    if(countries.length===0){
       svg.setAttribute('viewBox','0 0 900 480');
-      svg.innerHTML = `<text x="450" y="240" text-anchor="middle" font-size="16" fill="${cSub}">The board is empty — add migrations to see the routes</text>`;
+      svg.innerHTML = `<text x="450" y="240" text-anchor="middle" font-size="16" fill="${cSub}">The board is empty — add migrations or birthplaces to see the routes</text>`;
       listEl.innerHTML='';
       return;
     }
 
-    const groups = {};
-    migrations.forEach(m=>{
-      const label = destLabelFor(m);
-      (groups[label] = groups[label]||[]).push(m);
+    const labels = countries.slice().sort((a,b)=>{
+      if(a==='Greece') return -1;
+      if(b==='Greece') return 1;
+      return (nodePeople[b]?nodePeople[b].size:0) - (nodePeople[a]?nodePeople[a].size:0) || a.localeCompare(b);
     });
-    const labels = Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
 
-    const colorFor = {documented:'#0071e3', story:'#c5690a', hypothesis:'#8e3bd1', unknown:'#86868b'};
-    const dashFor = {documented:'0', story:'7,4', hypothesis:'7,4', unknown:'2,4'};
-    const confRank = {documented:4, story:2, hypothesis:3, unknown:1};
-    function dominant(list){
-      let best = 'unknown';
-      list.forEach(m=>{ if((confRank[m.confidence]||1) >= (confRank[best]||1)) best = m.confidence; });
+    const colorFor = {documented:'#0071e3', story:'#c5690a', hypothesis:'#8e3bd1', unknown:'#86868b', inferred:cTertiary};
+    const dashFor = {documented:'0', story:'7,4', hypothesis:'7,4', unknown:'2,4', inferred:'1,5'};
+    const confRank = {documented:5, hypothesis:4, story:3, unknown:2, inferred:1};
+    function dominant(items){
+      let best = items[0].conf;
+      items.forEach(it=>{ if((confRank[it.conf]||1) >= (confRank[best]||1)) best = it.conf; });
       return best;
     }
 
-    const ROW_GAP = 112;
-    const height = Math.max(480, 100 + labels.length*ROW_GAP);
-    svg.setAttribute('viewBox', `0 0 900 ${height}`);
-    const hub = {x:150, y:height/2};
-
-    let svgContent = `
-      <circle cx="${hub.x}" cy="${hub.y}" r="36" fill="#0071e3" opacity="0.12"/>
-      <circle cx="${hub.x}" cy="${hub.y}" r="30" fill="${cCard}" stroke="#0071e3" stroke-width="2"/>
-      <text x="${hub.x}" y="${hub.y+5}" text-anchor="middle" font-weight="600" font-size="13" fill="${cText}">Greece</text>
-    `;
-
+    const n = labels.length;
+    const W = 900, H = Math.max(520, 420 + n*8);
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const cx = W/2, cy = H/2;
+    const radius = Math.min(300, Math.max(150, 110 + n*16));
+    const pos = {};
     labels.forEach((label, i)=>{
-      const list = groups[label];
-      const nodeX = 660, nodeY = 70 + i*ROW_GAP + ROW_GAP/2;
-      const best = dominant(list);
-      const surnames = Array.from(new Set(list.map(m=>surnameOf(m.personId)).filter(Boolean)));
-      const surnameText = surnames.slice(0,4).join(', ') + (surnames.length>4 ? ' +'+(surnames.length-4) : '');
-      const estWidth = Math.min(340, Math.max(150, 22 + Math.max(label.length, surnameText.length)*7.2));
+      const angle = (2*Math.PI*i/n) - Math.PI/2;
+      pos[label] = { x: cx + radius*Math.cos(angle), y: cy + radius*Math.sin(angle) };
+    });
 
-      svgContent += `<path d="M ${hub.x+30} ${hub.y} Q ${(hub.x+nodeX)/2} ${(hub.y+nodeY)/2}, ${nodeX-estWidth/2-6} ${nodeY}"
-        fill="none" stroke="${colorFor[best]}" stroke-width="2.5" stroke-dasharray="${dashFor[best]}"/>`;
+    let svgContent = '';
+    Object.values(edgeMap).forEach(e=>{
+      const a = pos[e.from], b = pos[e.to];
+      if(!a || !b) return;
+      const best = dominant(e.items);
+      const midX = (a.x+b.x)/2 + (a.y-b.y)*0.08;
+      const midY = (a.y+b.y)/2 + (b.x-a.x)*0.08;
+      svgContent += `<path d="M ${a.x} ${a.y} Q ${midX} ${midY}, ${b.x} ${b.y}" fill="none" stroke="${colorFor[best]}" stroke-width="2.2" stroke-dasharray="${dashFor[best]}"/>`;
+    });
+
+    labels.forEach(label=>{
+      const p = pos[label];
+      const peopleHere = nodePeople[label] ? Array.from(nodePeople[label]) : [];
+      const surnames = Array.from(new Set(peopleHere.map(surnameOf).filter(Boolean)));
+      const surnameText = surnames.slice(0,4).join(', ') + (surnames.length>4 ? ' +'+(surnames.length-4) : '');
+      const estWidth = Math.min(320, Math.max(140, 22 + Math.max(label.length, surnameText.length)*7.2));
+      const isGreece = label==='Greece';
       svgContent += `
-        <rect x="${nodeX-estWidth/2}" y="${nodeY-32}" width="${estWidth}" height="64" rx="14" fill="${cCard}" stroke="${cText}" stroke-width="1.5"/>
-        <text x="${nodeX}" y="${nodeY-10}" text-anchor="middle" font-weight="600" font-size="13" fill="${cText}">${escapeHtml(label)}</text>
-        <text x="${nodeX}" y="${nodeY+7}" text-anchor="middle" font-size="10.5" fill="${cSub}">${list.length} record${list.length===1?'':'s'}</text>
-        <text x="${nodeX}" y="${nodeY+22}" text-anchor="middle" font-size="10" fill="${cSub}">${escapeHtml(surnameText || 'surname unknown')}</text>
+        <rect x="${p.x-estWidth/2}" y="${p.y-32}" width="${estWidth}" height="64" rx="14" fill="${cCard}" stroke="${isGreece?'#0071e3':cText}" stroke-width="1.5"/>
+        <text x="${p.x}" y="${p.y-10}" text-anchor="middle" font-weight="600" font-size="13" fill="${cText}">${escapeHtml(label)}</text>
+        <text x="${p.x}" y="${p.y+7}" text-anchor="middle" font-size="10.5" fill="${cSub}">${peopleHere.length} ${peopleHere.length===1?'person':'people'}</text>
+        <text x="${p.x}" y="${p.y+22}" text-anchor="middle" font-size="10" fill="${cSub}">${escapeHtml(surnameText || 'surname unknown')}</text>
       `;
     });
     svg.innerHTML = svgContent;
 
-    const confLabel = {documented:'documented', story:'family story', hypothesis:'hypothesis', unknown:'unknown reason'};
+    const confLabel = {documented:'documented', story:'family story', hypothesis:'hypothesis', unknown:'unknown reason', inferred:'inferred from birthplaces'};
+    const edgeKeys = Object.keys(edgeMap).sort((a,b)=>edgeMap[b].items.length-edgeMap[a].items.length);
     let listHtml = '';
-    labels.forEach(label=>{
-      const list = groups[label];
-      listHtml += `<h3>${escapeHtml(label)}</h3>`;
-      list.forEach(m=>{
-        listHtml += `<div class="mig-card conf-${m.confidence||'unknown'}">
-          <div class="mig-top">
-            <div class="mig-route">${escapeHtml(personName(m.personId))} (${escapeHtml(surnameOf(m.personId))}): ${escapeHtml(migRouteText(m))}</div>
-            <span class="mig-badge conf-${m.confidence||'unknown'}">${confLabel[m.confidence]||'unknown reason'}</span>
-          </div>
-          ${m.notes ? `<div class="mig-notes">${escapeHtml(m.notes)}</div>` : ''}
-        </div>`;
+    edgeKeys.forEach(key=>{
+      const e = edgeMap[key];
+      listHtml += `<h3>${escapeHtml(e.from)} → ${escapeHtml(e.to)}</h3>`;
+      e.items.forEach(it=>{
+        if(it.source === 'logged'){
+          const m = it.extra;
+          listHtml += `<div class="mig-card conf-${m.confidence||'unknown'}">
+            <div class="mig-top">
+              <div class="mig-route">${escapeHtml(personName(m.personId))} (${escapeHtml(surnameOf(m.personId))}): ${escapeHtml(migRouteText(m))}</div>
+              <span class="mig-badge conf-${m.confidence||'unknown'}">${confLabel[m.confidence]||'unknown reason'}</span>
+            </div>
+            ${m.notes ? `<div class="mig-notes">${escapeHtml(m.notes)}</div>` : ''}
+          </div>`;
+        } else {
+          const child = it.extra.child, parent = it.extra.parent;
+          listHtml += `<div class="mig-card conf-inferred">
+            <div class="mig-top">
+              <div class="mig-route">${escapeHtml(child.name)} (${escapeHtml(surnameOf(child.id))}): born ${escapeHtml(child.birthPlace)} — parent ${escapeHtml(parent.name)} born ${escapeHtml(parent.birthPlace)}</div>
+              <span class="mig-badge conf-inferred">inferred, not logged</span>
+            </div>
+            <div class="mig-notes">No migration recorded yet — this is guessed from the two birthplaces.</div>
+            <div style="margin-top:9px;"><button class="btn btn-ghost btn-small log-inferred-btn" data-person="${child.id}" data-from="${escapeHtml(parent.birthPlace)}" data-to="${escapeHtml(child.birthPlace)}">+ Log this migration</button></div>
+          </div>`;
+        }
       });
     });
-    listEl.innerHTML = listHtml || '<div class="scrollnote">No destinations yet.</div>';
+    listEl.innerHTML = listHtml || '<div class="scrollnote">Nothing to show yet.</div>';
+    listEl.querySelectorAll('.log-inferred-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        openAddMig({ personId: btn.dataset.person, from: btn.dataset.from, to: btn.dataset.to });
+      });
+    });
   }
 
   function applyTheme(mode){
